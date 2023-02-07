@@ -36,7 +36,7 @@ class SchemaExistsCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setName('tspm:database:schema-exists')
+            ->setName('brainbits:database:schema-exists')
             ->setDescription('This command returns an error code of '.self::CODE_NO_TABLES.' if a schema does not exist.'); // phpcs:ignore
     }
 
