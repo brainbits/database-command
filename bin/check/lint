@@ -1,0 +1,21 @@
+#!/usr/bin/env sh
+
+# Do not modify this file - this file is created by bin/wrapper/dist-sync and will be overriden every time dist-sync is invoked.
+# see https://gitlab.brainbits.net/docker/dist/-/blob/master/README.md
+
+. "$(dirname $0)/../config"
+
+printf "${check}>>> running ${check_name}lint${check} check on ${check_name}%s${reset}\n" "${NAME}"
+
+cmd=$*
+if [ $# -eq 0 ]; then
+    cmd=""
+    if [ -d "${DIR}/src" ]; then
+        cmd="${ARGS} src"
+    fi
+    if [ -d "${DIR}/tests" ]; then
+        cmd="${ARGS} tests"
+    fi
+fi
+
+"${BIN_DIR}/wrapper/devtools-parallel-lint" ${cmd}

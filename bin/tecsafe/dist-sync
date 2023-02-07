@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+
+# shellcheck source=bin/config
+. "$(dirname "$0")/../config"
+
+ARGS="$@"
+
+CMD="/dist/sync $ARGS"
+if [[ "$SHOW_CMD" == "1" ]] ; then
+    printf "${command}$ $CMD${command}\n"
+fi
+
+docker pull -q "$DEVTOOLS_IMAGE"
+
+docker run --rm --init -it \
+    -v "$DIR":/app:delegated \
+    "$DEVTOOLS_IMAGE" \
+    $CMD

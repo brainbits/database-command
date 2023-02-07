@@ -1,0 +1,22 @@
+#!/usr/bin/env sh
+
+# Do not modify this file - this file is created by bin/wrapper/dist-sync and will be overriden every time dist-sync is invoked.
+# see https://gitlab.brainbits.net/docker/dist/-/blob/master/README.md
+
+. "$(dirname $0)/../config"
+
+ARGS=$*
+if [ $# -eq 0 ]; then
+    if [ ! -f "${DIR}/deptrac.yaml" ] && [ ! -f "${DIR}/depfile.yaml" ] && [ ! -f "${DIR}/depfile.yml" ] ; then
+        printf "${failure}No deptrac.yaml file found in project root.${reset}\n"
+
+        exit 1
+    fi
+
+    cmd="analyze --ansi --report-uncovered --fail-on-uncovered"
+fi
+
+
+printf "${check}>>> running ${check_name}layer-dependencies${check} check on ${check_name}%s${reset}\n" "${NAME}"
+
+"$(wrapper deptrac ${DEPTRAC_CMD:-deptrac})" ${cmd}

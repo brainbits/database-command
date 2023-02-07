@@ -1,0 +1,50 @@
+#!/usr/bin/env sh
+
+# createComposerDockerExtras <result-var-by-ref>
+createComposerDockerExtras() {
+    local __resultvar=$1
+
+    result=""
+
+    if [ -n "$SSH_FORWARD_ENABLED" ]; then
+        if [ "$(uname)" = "Linux" ]; then
+            result="--volume /etc/passwd:/etc/passwd:ro --volume /etc/group:/etc/group:ro --volume $SSH_AUTH_SOCK:/ssh-auth.sock --env SSH_AUTH_SOCK=/ssh-auth.sock ${result}"
+        else
+            result="--volume /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock --env SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock ${result}"
+        fi
+    fi
+
+    if [ -n "${COMPOSER_AUTH_ENABLED}" ]; then
+        if [ -n "${COMPOSER_AUTH}" ]; then
+            result="--env COMPOSER_AUTH=${COMPOSER_AUTH} ${result}"
+        elif [ -n "${COMPOSER_AUTH_REPO}" ] && [ -n "${COMPOSER_AUTH_USER}" ] && [ -n "${COMPOSER_AUTH_PASSWORD}" ]; then
+            composerAuth='{"http-basic":{"'${COMPOSER_AUTH_REPO}'":{"username":"'${COMPOSER_AUTH_USER}'","password":"'${COMPOSER_AUTH_PASSWORD}'"}}}'
+            result="--env COMPOSER_AUTH=${composerAuth} ${result}"
+        elif [ ! -f "${HOME}/.composer/auth.json" ]; then
+            printf "${warning}Please make sure that %s/.composer/auth.json exists and the credentials of your repository are present, or provide env vars COMPOSER_AUTH_REPO, COMPOSER_AUTH_USER and COMPOSER_AUTH_PASSWORD${reset}\n" "${HOME}"
+        fi
+    fi
+
+    eval $__resultvar="'$result'"
+}
+
+# createComposerDockerExtras <result-var-by-ref>
+createComposerDockerBuildExtras() {
+    local __resultvar=$1
+
+    if [ -n "${COMPOSER_AUTH_ENABLED}" ]; then
+        if [ -n "${COMPOSER_AUTH}" ]; then
+            result="--build-arg COMPOSER_AUTH=${COMPOSER_AUTH} ${COMPOSER_DOCKER_EXTRAS}"
+        elif [ -n "${COMPOSER_AUTH_REPO}" ] && [ -n "${COMPOSER_AUTH_USER}" ] && [ -n "${COMPOSER_AUTH_PASSWORD}" ]; then
+            composerAuth='{"http-basic":{"'${COMPOSER_AUTH_REPO}'":{"username":"'${COMPOSER_AUTH_USER}'","password":"'${COMPOSER_AUTH_PASSWORD}'"}}}'
+            result="--build-arg COMPOSER_AUTH=${composerAuth} ${DOCKER_BUILD_EXTRAS}"
+        elif [ -f "${HOME}/.composer/auth.json" ]; then
+            result="--secret id=composer-auth-json,src=${HOME}/.composer/auth.json ${DOCKER_BUILD_EXTRAS}"
+        else
+            printf "Please make sure that %s/.composer/auth.json exists and the credentials of your repository are present, or provide env vars COMPOSER_AUTH_REPO, COMPOSER_AUTH_USER and COMPOSER_AUTH_PASSWORD\n" "${HOME}"
+            exit 1
+        fi
+    fi
+
+    eval $__resultvar="'$result'"
+}

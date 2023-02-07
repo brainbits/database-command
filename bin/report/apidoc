@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+
+# Do not modify this file - this file is created by bin/wrapper/dist-sync and will be overriden every time dist-sync is invoked.
+# see https://gitlab.brainbits.net/docker/dist/-/blob/master/README.md
+
+. "$(dirname $0)/../config"
+
+FLAVOR="${APIDOC:=phpdocumentor}"
+
+printf "${check}>>> running ${check_name}apidocs${check} (%s) report on ${check_name}%s${reset}\n" "${FLAVOR}" "${NAME}"
+
+"${BIN_DIR}/report/_variant/apidoc-${FLAVOR}" $*

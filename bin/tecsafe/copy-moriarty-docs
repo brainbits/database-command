@@ -1,0 +1,37 @@
+#!/usr/bin/env sh
+
+# shellcheck source=bin/config
+. "$(dirname "$0")/../config"
+. "$(dirname "$0")/include/ensure-composer-ssh-key"
+
+ARGS="$@"
+
+if [[ -z "$1" ]]; then
+  echo "No source specified!"
+  exit 1
+fi
+
+if [[ -z "$2" ]]; then
+  echo "No target specified!"
+  exit 1
+fi
+
+if [[ -n "$3" ]]; then
+  echo "More options than source and target specified!"
+  exit 1
+fi
+
+SOURCE="$1"
+TARGET="$2"
+TARGET_DIR="$(dirname $TARGET)"
+
+docker run --rm --init \
+    -v "$DIR":/app:delegated \
+    "$DEVTOOLS_IMAGE" \
+    bash -c "eval \$(ssh-agent -s) && \
+        mkdir -p ~/.ssh && \
+        echo -e '$SSH_PRIVATE_KEY' > ~/.ssh/id_rsa && \
+        chmod 600 ~/.ssh/id_rsa && \
+        echo -e 'Host *\n\tStrictHostKeyChecking no\n\n' > ~/.ssh/config && \
+        ssh moriarty-docs@ofcs-staging.brainbits-gmbh.local \"test -d '$TARGET_DIR' || mkdir -p '$TARGET_DIR'\" &&
+        scp -r $SOURCE moriarty-docs@ofcs-staging.brainbits-gmbh.local:$TARGET"

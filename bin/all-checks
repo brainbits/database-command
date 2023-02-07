@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+# Do not modify this file - this file is created by bin/wrapper/dist-sync and will be overriden every time dist-sync is invoked.
+# see https://gitlab.brainbits.net/docker/dist/-/blob/master/README.md
+
+. "$(dirname $0)/config"
+
+includeLocalConfig "all-checks" $*
+
+printf "${check_all}### running all checks...${reset}\n"
+
+if [ -z "$NO_PULL" ]; then
+    "${BIN_DIR}/wrapper/devtools-pull" -q
+fi
+
+checks=($CHECKS)
+warn_checks=($WARN_CHECKS)
+results=()
+timings=()
+
+for checkCmd in ${checks[@]}; do
+    start=$(date +%s)
+
+    "${BIN_DIR}/check/${checkCmd}"
+    results+=($?)
+
+    end=$(date +%s)
+    timings+=($((end-start)))
+done
+
+exitCode=0
+for index in ${!checks[@]}; do
+    checkCmd=${checks[$index]}
+    result=${results[$index]}
+    timing=${timings[$index]}
+
+    printf "${check_all}### ${command}%4d s${check_all} | " "${timing}"
+    if [[ ${result} -eq 125 ]]; then
+        printf "${failure}✘ docker run for ${checkCmd} failed. Is docker running? ${reset}\n"
+        if [[ ${exitCode} -eq 0 ]]; then
+            exitCode="${result}"
+        fi
+    elif [[ $result == 0 ]]; then
+        printf "${success}✔ ${checkCmd} ${reset}\n"
+    elif [[ " ${warn_checks[@]} " =~ " ${checkCmd} " ]]; then
+        printf "${warning}! ${checkCmd}${reset}\n"
+    else
+        printf "${failure}✘ ${checkCmd} ${reset}\n"
+        if [[ ${exitCode} -eq 0 ]]; then
+            exitCode=${result}
+        fi
+    fi
+done
+
+exit $exitCode

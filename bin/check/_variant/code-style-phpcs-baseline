@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+
+# Do not modify this file - this file is created by bin/wrapper/dist-sync and will be overriden every time dist-sync is invoked.
+# see https://gitlab.brainbits.net/docker/dist/-/blob/master/README.md
+
+. "$(dirname $0)/../../config"
+
+if [ -n "${CODE_STYLE_REPORT_FILE}" ]; then
+    echo "${failure}phpcs-baseline does not support \$CODE_STYLE_REPORT_FILE${reset}\n"
+    exit 1
+fi
+
+if [ ! -f "${DIR}/phpcs.baseline" ] && [ -n "${CI}" ]; then
+    echo "${failure}Baseline is missing, can't be created automatically in CI run${reset}\n"
+    exit 1
+fi
+
+if [ ! -f "${DIR}/phpcs.baseline" ]; then
+    printf "${warning}No baseline found, creating${reset}\n"
+
+    "${BIN_DIR}/wrapper/devtools-phpcs-sarb-create" /app/phpcs.baseline
+    printf "${warning}Created ${DIR}/phpcs.baseline, please review and commit${reset}\n"
+fi
+
+"${BIN_DIR}/wrapper/devtools-phpcs-sarb-remove" /app/phpcs.baseline

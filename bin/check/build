@@ -1,0 +1,31 @@
+#!/usr/bin/env sh
+
+# Do not modify this file - this file is created by bin/wrapper/dist-sync and will be overriden every time dist-sync is invoked.
+# see https://gitlab.brainbits.net/docker/dist/-/blob/master/README.md
+
+. "$(dirname $0)/../config"
+
+if [ -f "${BIN_DIR}/local/include-build" ]; then . "${BIN_DIR}/local/include-build"; fi
+
+createComposerDockerBuildExtras dockerBuildExtras
+
+printf "${check}>>> running ${check_name}build${check} check on ${check_name}%s${reset}\n" "${NAME}"
+
+if [ -z "$NO_PULL" ]; then
+  dockerBuildExtras="--pull ${dockerBuildExtras}"
+fi
+
+tempImage="$(cat /dev/urandom | env LC_CTYPE=C tr -cd [:alnum:] | tr -cd [:lower:] | head -c 24; echo)"
+
+DOCKER_BUILDKIT=1 docker build \
+    ${dockerBuildExtras} \
+    --progress=plain \
+    --tag "${tempImage}" \
+    $* \
+    "${DIR}"
+
+exitCode=$?
+
+docker image rm "${tempImage}"
+
+exit ${exitCode}

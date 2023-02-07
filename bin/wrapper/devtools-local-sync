@@ -1,0 +1,52 @@
+#!/usr/bin/env sh
+
+# Do not modify this file - this file is created by bin/wrapper/dist-sync and will be overriden every time dist-sync is invoked.
+# see https://gitlab.brainbits.net/docker/dist/-/blob/master/README.md
+
+. "$(dirname $0)/../config"
+
+if [ -z "${LOCAL_WRAPPER_DIR}" ]; then
+  printf "LOCAL_WRAPPER_DIR has to be set\n"
+  exit 1
+fi
+
+composer="${COMPOSER_CMD:=composer}"
+phpcs="${PHPCS_CMD:=phpcs}"
+tools="${composer} ${PHPCS_CMD:=phpcs} ${PHPSTAN_CMD:=phpstan} ${PHPUNIT_CMD:=phpunit} ${DEPTRAC_CMD:=deptrac} ${COMPOSER_REQUIRE_CHECKER_CMD:=composer-require-checker} ${RECTOR_CMD:=rector}"
+
+pullImage "${DEVTOOLS_IMAGE}"
+
+id=$(docker create "${DEVTOOLS_IMAGE}")
+for tool in $tools; do
+  # composer needs special handling, since it is not installed via the tool mechanism
+  if [ "${tool}" != "${composer}" ]; then
+    printf "${check}Copy ${check_name}${tool}${check} composer config to ${check_name}${LOCAL_WRAPPER_DIR}/${tool}/${reset}\n"
+    mkdir -p "${LOCAL_WRAPPER_DIR}/${tool}"
+    docker cp "${id}:/usr/lib/tools/${tool}/composer.json" "${LOCAL_WRAPPER_DIR}/${tool}/composer.json"
+    docker cp "${id}:/usr/lib/tools/${tool}/composer.lock" "${LOCAL_WRAPPER_DIR}/${tool}/composer.lock"
+  else
+    printf "${check}Copy ${check_name}composer${check} binary to ${check_name}${LOCAL_WRAPPER_DIR}/bin/${composer}${reset}\n"
+    mkdir -p "${LOCAL_WRAPPER_DIR}/bin"
+    docker cp --follow-link "${id}:/usr/bin/${composer}" "${LOCAL_WRAPPER_DIR}/bin/${composer}"
+  fi
+done
+docker rm ${id}
+
+for tool in $tools; do
+  if [ "${tool}" != "${composer}" ]; then
+    printf "${check}Install composer dependencies in ${check_name}${LOCAL_WRAPPER_DIR}/${tool}${reset}\n"
+    cd "${LOCAL_WRAPPER_DIR}/${tool}"
+    ${LOCAL_WRAPPER_DIR}/bin/composer install --no-interaction
+
+    printf "${check}Create symlink from ${check_name}${LOCAL_WRAPPER_DIR}/${tool}/vendor/bin/${tool}${check} to ${check_name}${LOCAL_WRAPPER_DIR}/bin/${tool}\n"
+    cd "${LOCAL_WRAPPER_DIR}/bin"
+    ln -sf "../${tool}/vendor/bin/${tool}"
+
+    # handle phpcbf command, which resides in phpcs tool dir
+    if [ "${tool}" = "${phpcs}" ]; then
+      printf "${check}Create symlink from ${check_name}${LOCAL_WRAPPER_DIR}/${phpcs}/vendor/bin/phpcbf${check} to ${check_name}${LOCAL_WRAPPER_DIR}/bin/phpcbf\n"
+      cd "${LOCAL_WRAPPER_DIR}/bin"
+      ln -sf "../${phpcs}/vendor/bin/phpcbf"
+    fi
+  fi
+done

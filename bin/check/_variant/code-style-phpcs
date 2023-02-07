@@ -1,0 +1,21 @@
+#!/usr/bin/env sh
+
+# Do not modify this file - this file is created by bin/wrapper/dist-sync and will be overriden every time dist-sync is invoked.
+# see https://gitlab.brainbits.net/docker/dist/-/blob/master/README.md
+
+. "$(dirname $0)/../../config"
+
+cmd=$*
+if [ $# -eq 0 ]; then
+    cmd=""
+    if [ -n "${CI}" ]; then
+        cmd="${cmd} -q"
+    fi
+
+    if [ -n "${CODE_STYLE_REPORT_FILE}" ]; then
+        mkdir -p "$(dirname ${CODE_STYLE_REPORT_FILE})"
+        cmd="${cmd} --report=Satesh\\Phpcs\\GitLabReport --report-file=${CODE_STYLE_REPORT_FILE}"
+    fi
+fi
+
+"$(wrapper phpcs ${PHPCS_CMD:-phpcs})" ${cmd}

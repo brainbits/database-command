@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+
+# Do not modify this file - this file is created by bin/wrapper/dist-sync and will be overriden every time dist-sync is invoked.
+# see https://gitlab.brainbits.net/docker/dist/-/blob/master/README.md
+
+. "$(dirname $0)/../../config"
+
+printf "\n"
+printf "${failure}! security-checker is discontinued and the required endpoint was turned off.${reset}\n"
+printf "\n"
+printf "${warning}! Upgrade your in local/include-config to use the local-php-security-checker flavor.${reset}\n"
+printf "${warning}! SECURITY=local-php-security-checker${reset}\n"
+printf "\n"
+printf "${warning}! Falling back to local-php-security-checker now${reset}\n"
+printf "\n"
+printf "\n"
+
+"${BIN_DIR}/wrapper/devtools-local-php-security-checker" $*

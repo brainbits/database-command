@@ -1,0 +1,26 @@
+#!/usr/bin/env sh
+
+# shellcheck source=bin/config
+. "$(dirname "$0")/../config"
+
+OUTPUT_DIRECTORY="$1"
+if [[ -z "$OUTPUT_DIRECTORY" ]]; then
+    OUTPUT_DIRECTORY="public/version-analyzer"
+fi
+
+if [[ ! -d $OUTPUT_DIRECTORY ]]; then
+    mkdir -p $OUTPUT_DIRECTORY
+fi
+
+# create container from image
+DOCKER_COPY_ID="$(docker create gitlab.brainbits.net:4567/ofcs/version-analyzer-frontend:master)"
+
+# copy files from cotainer to local filesystem
+docker cp "$DOCKER_COPY_ID":/usr/share/nginx/html $OUTPUT_DIRECTORY
+
+# remove temporarily created container
+docker rm "$DOCKER_COPY_ID" 1>/dev/null
+
+# move static html to correct place ("docker cp /usr/share/nginx/html/*" is not possible)
+mv $OUTPUT_DIRECTORY/html/* $OUTPUT_DIRECTORY/
+rmdir $OUTPUT_DIRECTORY/html

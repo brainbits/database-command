@@ -1,0 +1,35 @@
+#!/usr/bin/env sh
+
+# Do not modify this file - this file is created by bin/wrapper/dist-sync and will be overriden every time dist-sync is invoked.
+# see https://gitlab.brainbits.net/docker/dist/-/blob/master/README.md
+
+. "$(dirname $0)/../config"
+
+includeLocalConfig "build" $*
+
+createComposerDockerBuildExtras composerDockerBuildExtras
+
+printf "${run}>>> building image ${run_name}%s${run} for ${run_name}%s${reset}\n" "${APP_IMAGE}" "${NAME}"
+
+dockerBuildExtras="${DOCKER_BUILD_EXTRAS}"
+
+if [ -z "${NO_PULL}" ]; then
+  dockerBuildExtras="--pull ${dockerBuildExtras}"
+fi
+
+DOCKER_BUILDKIT=1 docker build \
+    ${dockerBuildExtras} \
+    ${composerDockerBuildExtras} \
+    --progress=plain \
+    --tag "${APP_IMAGE}" \
+    $* \
+    "${DIR}"
+
+if [ $? != 0 ]; then
+  printf "${failure}>>> build image ${failure_name}%s${failure} for ${failure_name}%s${failure} failed${reset}\n" "${APP_IMAGE}" "${NAME}"
+  exit 1
+fi
+
+printf "${run}>>> built image ${run_name}%s${run} for ${run_name}%s${reset}\n" "${APP_IMAGE}" "${NAME}"
+
+includeLocalConfig "build-post" $*

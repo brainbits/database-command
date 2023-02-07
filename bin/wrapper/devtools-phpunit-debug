@@ -1,0 +1,26 @@
+#!/usr/bin/env sh
+
+# Do not modify this file - this file is created by bin/wrapper/dist-sync and will be overriden every time dist-sync is invoked.
+# see https://gitlab.brainbits.net/docker/dist/-/blob/master/README.md
+
+. "$(dirname $0)/../config"
+
+ideKey="${IDE_KEY:=PHPSTORM}"
+
+phpXdebugCmd="${PHP_XDEBUG_CMD:=php-xdebug}"
+phpunitCmd="${PHPUNIT_CMD:=phpunit}"
+
+fullPhpunitCmd=$(docker run --rm --init "${DEVTOOLS_IMAGE}" which "${phpunitCmd}")
+
+cmd="${phpXdebugCmd} -dxdebug.client_host=host.docker.internal -dxdebug.mode=debug -dxdebug.start_upon_error=yes -dxdebug.client_port=9000 -dxdebug.discover_client_host=true ${fullPhpunitCmd} $*"
+showCmd "${cmd}"
+
+docker run $(interactiveTty) --rm --init \
+    ${DOCKER_USER} \
+    --volume "${DIR}:/app${DOCKER_MOUNT_MODE}" \
+    --env "XDEBUG_CONFIG=idekey=${ideKey}" \
+    --env "PHP_IDE_CONFIG=serverName=${NAME}" \
+    ${WRAPPER_DOCKER_EXTRAS} \
+    ${DEVTOOLS_DOCKER_EXTRAS} \
+    "${DEVTOOLS_IMAGE}" \
+    ${cmd}

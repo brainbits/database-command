@@ -1,0 +1,93 @@
+#!/usr/bin/env sh
+
+# This file is partly recreated by bin/wrapper/dist-sync, only the contents of the variables inside the EDITABLE-block can be safely changed.
+# see https://gitlab.brainbits.net/docker/dist/-/blob/master/README.md
+
+if [ -z "$NO_COLOR" ]; then
+    failure="\e[31m"
+    failure_name="\e[91m"
+    warning="\e[33m"
+    warning_name="\e[93m"
+    success="\e[32m"
+    success_name="\e[92m"
+    command="\e[33m"
+    command_name="\e[93m"
+    run="\e[36m"
+    run_name="\e[96m"
+    check="\e[36m"
+    check_all="\e[96m"
+    check_name="\e[96m"
+    reset="\e[0m"
+fi
+
+if [ -z "${DIR}" ]; then
+    if [ -f "$(dirname "$0")/bin/config" ]; then
+        DIR="$(cd "$(dirname "$0")" && pwd)"
+    elif [ -f "$(dirname "$0")/../bin/config" ]; then
+        DIR="$(cd "$(dirname "$0")/.." && pwd)"
+    elif [ -f "$(dirname "$0")/../../bin/config" ]; then
+        DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+    elif [ -f "$(dirname "$0")/../../../bin/config" ]; then
+        DIR="$(cd "$(dirname "$0")/../../.." && pwd)"
+    else
+        printf "Cannot find bin/config to determine DIR environment variable\n"
+        exit 1
+    fi
+fi
+
+# Begin EDITABLE
+# Please mind, only values are editable and retained on dist-sync.
+
+if [ -z "$DEVTOOLS_VERSION" ]; then
+    DEVTOOLS_VERSION="8.2"
+fi
+
+DIST_VERSION="2.43.5"
+BIN_DIR="$DIR/bin"
+BUILD_DIR="$DIR/build"
+DEFAULT_BRANCH="master"
+RELEASE_BRANCH="master"
+TAG=${CI_COMMIT_REF_SLUG}
+TAG=${TAG:-$(cd $DIR && git rev-parse --abbrev-ref HEAD 2>/dev/null)}
+TAG=${TAG:-unknown}
+TAG=$(echo ${TAG} | sed "s#^HEAD\$##" | sed "s#^${RELEASE_BRANCH}\$#latest#" | awk '{gsub(/[^a-z0-9A-Z]/,"-",$0); print tolower($0)}')
+PROJECT_PATH="php-packages/database-command/tspm"
+APP_IMAGE="gitlab.brainbits.net:4567/$PROJECT_PATH:"
+DEVTOOLS_IMAGE="gitlab.brainbits.net:4567/tspm/devtools:$DEVTOOLS_VERSION"
+NAME="$(echo $PROJECT_PATH | awk '{gsub(/[^a-z0-9A-Z]/,"-",$0); print tolower($0)}')"
+CHECKS="outdated-packages transitive-dependencies code-style static-analysis tests"
+WARN_CHECKS="outdated-packages transitive-dependencies"
+DOT_ENV="$DIR/.env"
+FLAGS="+composer"
+
+# End EDITABLE
+
+. "${BIN_DIR}/_include/functions-composer"
+. "${BIN_DIR}/_include/functions-misc"
+. "${BIN_DIR}/_include/defaults"
+
+includeLocalConfig "config" $*
+
+if [ "$(basename "$0")" = "config" ]; then
+    if [ $# -gt 0 ]; then
+        eval echo "\${${1}}"
+        exit 0
+    fi
+
+    printf ">>> configuration:\n"
+    printf "DIST_VERSION:   %s\n" "${DIST_VERSION}"
+    printf "DIR:            %s\n" "${DIR}"
+    printf "BIN_DIR:        %s\n" "${BIN_DIR}"
+    printf "BUILD_DIR:      %s\n" "${BUILD_DIR}"
+    printf "DEFAULT_BRANCH: %s\n" "${DEFAULT_BRANCH}"
+    printf "RELEASE_BRANCH: %s\n" "${RELEASE_BRANCH}"
+    printf "TAG:            %s\n" "${TAG}"
+    printf "PROJECT_PATH:   %s\n" "${PROJECT_PATH}"
+    printf "APP_IMAGE:      %s\n" "${APP_IMAGE}"
+    printf "DEVTOOLS_IMAGE: %s\n" "${DEVTOOLS_IMAGE}"
+    printf "NAME:           %s\n" "${NAME}"
+    printf "CHECKS:         %s\n" "${CHECKS}"
+    printf "WARN_CHECKS:    %s\n" "${WARN_CHECKS}"
+    printf "DOT_ENV:        %s\n" "${DOT_ENV}"
+    printf "FLAGS:          %s\n" "${FLAGS}"
+fi

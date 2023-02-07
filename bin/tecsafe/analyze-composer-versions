@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+
+# shellcheck source=bin/config
+. "$(dirname "$0")/../config"
+
+ARGS="$@"
+if [ $# -eq 0 ] ; then
+    ARGS="."
+fi
+
+docker run --rm --init \
+    -v "$DIR":/app:delegated \
+    "$DEVTOOLS_IMAGE" \
+    analyze-composer-versions $ARGS

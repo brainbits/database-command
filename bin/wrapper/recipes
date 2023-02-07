@@ -1,0 +1,34 @@
+#!/usr/bin/env sh
+
+# Do not modify this file - this file is created by bin/wrapper/dist-sync and will be overriden every time dist-sync is invoked.
+# see https://gitlab.brainbits.net/docker/dist/-/blob/master/README.md
+
+. "$(dirname $0)/../config"
+
+includeLocalConfig "composer" $*
+
+requireEnv GITLAB_TOKEN
+
+gitlabEndpoint=${GITLAB_ENDPOINT:=https://gitlab.brainbits.net/api/v4}
+
+image="${RECIPES_IMAGE:=gitlab.brainbits.net:4567/docker/recipes-bot:latest}"
+pullImage "${image}"
+
+createComposerDockerExtras composerDockerExtras
+
+recipesBotCmd="${RECIPES_BOT_CMD:=recipes-bot}"
+
+cmd="${recipesBotCmd} $*"
+showCmd "${cmd}"
+
+docker run $(interactiveTty) --rm --init \
+    ${DOCKER_USER} \
+    --env "GITLAB_ENDPOINT=${gitlabEndpoint}" \
+    --env "GITLAB_TOKEN=${GITLAB_TOKEN}" \
+    --env "HOME=/tmp" \
+    --volume "${HOME}/.composer:/composer${DOCKER_MOUNT_MODE}" \
+    ${WRAPPER_DOCKER_EXTRAS} \
+    ${RECIPES_DOCKER_EXTRAS} \
+    ${composerDockerExtras} \
+    "${image}" \
+    ${cmd}

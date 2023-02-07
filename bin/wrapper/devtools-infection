@@ -1,0 +1,29 @@
+#!/usr/bin/env sh
+
+# Do not modify this file - this file is created by bin/wrapper/dist-sync and will be overriden every time dist-sync is invoked.
+# see https://gitlab.brainbits.net/docker/dist/-/blob/master/README.md
+
+. "$(dirname $0)/../config"
+
+infectionCmd="${INFECTION_CMD:=infection}"
+
+cmd="${infectionCmd} $*"
+showCmd "${cmd}"
+
+docker run $(interactiveTty) --rm --init \
+    ${DOCKER_USER} \
+    --volume "${DIR}:/app${DOCKER_MOUNT_MODE}" \
+    ${WRAPPER_DOCKER_EXTRAS} \
+    ${DEVTOOLS_DOCKER_EXTRAS} \
+    "${DEVTOOLS_IMAGE}" \
+    ${cmd}
+
+exitCode=$?
+
+if [ ${exitCode} -ne 0 ]; then
+    printf "${failure}Execution of infection failed. "
+    printf "If it failed due to a Code Coverage error, try calling it with --initial-tests-php-options=-dpcov.enabled=1 "
+    printf "or add {\"initialTestsPhpOptions\": \"-dpcov.enabled=1\"} to your infection.json.${reset}\n"
+fi
+
+exit ${exitCode}

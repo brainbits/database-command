@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+
+# Do not modify this file - this file is created by bin/wrapper/dist-sync and will be overriden every time dist-sync is invoked.
+# see https://gitlab.brainbits.net/docker/dist/-/blob/master/README.md
+
+. "$(dirname $0)/../config"
+
+requireEnv GITLAB_TOKEN
+
+gitlabEndpoint="${GITLAB_ENDPOINT:=https://gitlab.brainbits.net/api/v4}"
+
+image="${DIST_IMAGE:=gitlab.brainbits.net:4567/docker/dist:latest}"
+pullImage "${image}"
+
+distBotCmd="${DIST_BOT_CMD:=/dist/dist-bot}"
+
+cmd="${distBotCmd} $*"
+showCmd "${cmd}"
+
+docker run $(interactiveTty) --rm --init \
+    ${DOCKER_USER} \
+    --env "GITLAB_ENDPOINT=${gitlabEndpoint}" \
+    --env "GITLAB_TOKEN=${GITLAB_TOKEN}" \
+    ${WRAPPER_DOCKER_EXTRAS} \
+    ${DIST_DOCKER_EXTRAS} \
+    "${image}" \
+    ${cmd}

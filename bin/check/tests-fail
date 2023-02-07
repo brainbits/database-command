@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+
+# Do not modify this file - this file is created by bin/wrapper/dist-sync and will be overriden every time dist-sync is invoked.
+# see https://gitlab.brainbits.net/docker/dist/-/blob/master/README.md
+
+. "$(dirname $0)/../config"
+
+cmd="--stop-on-failure $*"
+
+if [ $# -eq 0 ]; then
+    if [ -n "${TESTS_REPORT_FILE}" ]; then
+        mkdir -p "$(dirname ${TESTS_REPORT_FILE})"
+        cmd=" ${cmd} --log-junit=${TESTS_REPORT_FILE}"
+    fi
+fi
+
+printf "${check}>>> running ${check_name}tests${check} check on ${check_name}%s${reset}\n" "${NAME}"
+
+"$(wrapper phpunit ${PHPUNIT_CMD:-phpunit})" ${cmd}

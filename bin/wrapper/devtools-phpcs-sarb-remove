@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+
+# Do not modify this file - this file is created by bin/wrapper/dist-sync and will be overriden every time dist-sync is invoked.
+# see https://gitlab.brainbits.net/docker/dist/-/blob/master/README.md
+
+. "$(dirname $0)/../config"
+
+if [ -z "$1" ]; then
+  echo "Usage: $(basename "$0") <baseline-file>"
+  exit 1
+fi
+
+sarbCmd="${SARB_CMD:=sarb}"
+phpcsCmd="${PHPCS_CMD:=phpcs}"
+
+cmd="${phpcsCmd} -q --report=json --basepath="" | ${sarbCmd} remove $1"
+showCmd "${cmd}"
+
+docker run $(interactiveTty) --rm --init \
+    ${DOCKER_USER} \
+    --volume "${DIR}:/app${DOCKER_MOUNT_MODE}" \
+    ${WRAPPER_DOCKER_EXTRAS} \
+    ${DEVTOOLS_DOCKER_EXTRAS} \
+    "${DEVTOOLS_IMAGE}" \
+    bash -c "${cmd}"
