@@ -1,7 +1,0 @@
-#!/usr/bin/env sh
-
-DOCKER_USER=""
-if [ "$(uname)" = "Linux" ]; then
-    DOCKER_USER="${DOCKER_USER:="--user $(id -u):$(id -g)"}"
-fi
-DOCKER_MOUNT_MODE="${DOCKER_MOUNT_MODE:=":cached"}"
