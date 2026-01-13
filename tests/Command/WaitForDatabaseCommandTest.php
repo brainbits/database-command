@@ -69,7 +69,7 @@ class WaitForDatabaseCommandTest extends TestCase
         $this->assertSame(0, $result);
 
         preg_match_all('/Connection failed/', $tester->getDisplay(), $match);
-        $this->assertCount(1, $match[0] ?? []);
+        $this->assertCount(1, $match[0]);
     }
 
     public function testDatabaseFailAfterRetry(): void
@@ -97,6 +97,6 @@ class WaitForDatabaseCommandTest extends TestCase
         $this->assertSame(200, $result);
 
         preg_match_all('/Connection failed/', $tester->getDisplay(), $match);
-        $this->assertCount(4, $match[0] ?? []);
+        $this->assertCount(4, $match[0]);
     }
 }
