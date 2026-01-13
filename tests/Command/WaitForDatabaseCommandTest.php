@@ -23,6 +23,7 @@ class WaitForDatabaseCommandTest extends TestCase
         $connection = $this->createMock(Connection::class);
         $command = new WaitForDatabaseCommand($connection);
 
+        /** @phpstan-ignore method.alreadyNarrowedType */
         $this->assertInstanceOf(Command::class, $command);
     }
 
